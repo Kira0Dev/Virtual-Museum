@@ -1,0 +1,77 @@
+from db_connection import create_connection, close_connection
+
+def create_courses_table(conn):
+    query = """
+    CREATE TABLE IF NOT EXISTS courses(
+        course_id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(150) NOT NULL,
+        credits INT,
+        start_date DATE,
+        is_active BOOLEAN DEFAULT TRUE,
+        description TEXT
+    ) ENGINE=InnoDB;
+    """
+    cursor = conn.cursor()
+    cursor.execute(query)
+
+    conn.commit()
+    print("Table 'courses' created.")
+    cursor.close()
+
+
+def insert_course(conn, title, credits, start_date, is_active, description):
+    query = """
+    INSERT INTO courses (title, credits, start_date, is_active, description)
+    VALUES (%s, %s, %s, %s, %s);
+    """
+    cursor = conn.cursor()
+    cursor.execute(query, (title, credits, start_date, is_active, description))
+
+    conn.commit()
+    cursor.close()
+
+
+def get_courses(conn):
+    query = "SELECT course_id, title, credits, start_date, is_active, description FROM courses;"
+
+    cursor = conn.cursor()
+    cursor.execute(query)
+
+    rows = cursor.fetchall()
+    print("Courses list:")
+
+    for r in rows:
+        print(f"ID: {r[0]}, Title: {r[1]}, Credits: {r[2]}, Start: {r[3]}, Active: {r[4]}, Desc: {r[5]}")
+
+    cursor.close()
+
+
+def main():
+    conn = create_connection()
+
+    if conn:
+        create_courses_table(conn)
+
+        insert_course(conn,
+            "Programación en Python",
+            4,
+            "2025-01-10",
+            True,
+            "Curso básico-intermedio de Python"
+        )
+
+        insert_course(conn,
+            "Bases de Datos",
+            3,
+            "2025-02-15",
+            False,
+            "Curso sobre SQL y modelado de datos"
+        )
+
+        get_courses(conn)
+
+        close_connection(conn)
+
+
+if __name__ == "__main__":
+    main()
