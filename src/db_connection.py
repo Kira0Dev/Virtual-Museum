@@ -1,4 +1,4 @@
-
+"""
 import mysql.connector
 from mysql.connector import Error
 from mysql.connector import pooling
@@ -10,7 +10,7 @@ load_dotenv()
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     "port": int(os.getenv('DB_PORT', 3306)),
-    'database': os.getenv('DB_NAME', 'biblioteca_db'),
+    'database': os.getenv('DB_NAME', 'museo_virtual'),
     "user": os.getenv('DB_USER', 'root'),
     "password": os.getenv('DB_PASSWORD', 'admin'),
     "autocommit": False,
@@ -57,4 +57,3 @@ def close_connection(connection):
     if connection and connection.is_connected():
         connection.close()
         print("Conexión cerrada.")
-"""
