@@ -1,4 +1,4 @@
-"""
+
 import mysql.connector
 from mysql.connector import Error
 from mysql.connector import pooling
@@ -57,3 +57,4 @@ def close_connection(connection):
     if connection and connection.is_connected():
         connection.close()
         print("Conexión cerrada.")
+"""
