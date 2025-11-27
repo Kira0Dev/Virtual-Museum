@@ -4,6 +4,7 @@ import hashlib
 from obras import Obras
 from comentarios import Comentarios
 from reportes import Reportes
+from salas import Salas
 
 def hash_password(password: str) -> str:
     if password is None:
@@ -195,6 +196,36 @@ class Visitante(Usuario):
 
     def crear_reporte(self, obra_id, motivo):
         return Reportes.crear_reporte(obra_id, self.id, motivo)
+    
+    def crear_sala(self, nombre, descripcion, privacidad, codigo_acceso):
+        return Salas.crear_sala(self.id, nombre, descripcion, privacidad, codigo_acceso)
+    
+    def eliminar_sala(self, sala_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT autor_id FROM salas WHERE id = %s",
+                (sala_id,)
+            )
+            autor_id = cur.fetchone()
+            if autor_id and autor_id[0] == self.id:
+                Salas.eliminar_sala_por_id(sala_id)
+                conn.commit()
+                return True
+            return False
+        finally:
+            cur.close()
+            conn.close()
+
+    def entrar_sala_id(self, sala_id, codigo_acceso):
+        sala = Salas.obtener_sala_por_id(sala_id)
+        if sala is None:
+            return None
+        if sala.privacidad == 'PRIVADA':
+            if sala.codigo_acceso != codigo_acceso:
+                return None
+        return sala
 
 class Artista(Usuario):
     def agregar_biografia(self, biografia):
