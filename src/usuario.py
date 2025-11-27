@@ -3,6 +3,7 @@ from db_connection import get_conn
 import hashlib
 from obras import Obras
 from comentarios import Comentarios
+from reportes import Reportes
 
 def hash_password(password: str) -> str:
     if password is None:
@@ -193,17 +194,7 @@ class Visitante(Usuario):
             conn.close()
 
     def crear_reporte(self, obra_id, motivo):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO reportes (autor_id, obra_id, motivo) VALUES (%s, %s, %s)",
-                (self.id, obra_id, motivo)
-            )
-            conn.commit()
-        finally:
-            cur.close()
-            conn.close()
+        return Reportes.crear_reporte(obra_id, self.id, motivo)
 
 class Artista(Usuario):
     def agregar_biografia(self, biografia):
@@ -261,17 +252,7 @@ class Moderador(Usuario):
         Obras.actualizar_estado_publicacion(obra_id, "RECHAZADA")
     
     def ver_reportes(self):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                "SELECT id, autor_id, obra_id, motivo, fecha FROM reportes WHERE estado = 'REVISION'"
-            )
-            reportes = cur.fetchall()
-            return reportes
-        finally:
-            cur.close()
-            conn.close()
+        return Reportes.obtener_reportes_pendientes()
 
     def resolver_reporte_borrar_obra(self, reporte_id, obra_id):
         conn = get_conn()
@@ -280,10 +261,8 @@ class Moderador(Usuario):
             #eliminar la obra
             Obras.eliminar_obra_por_id(obra_id)
             #actualizar el estado del reporte
-            cur.execute(
-                "UPDATE reportes SET estado = 'RESUELTO' WHERE id = %s",
-                (reporte_id,)
-            )
+            Reportes.resolver_reporte(reporte_id)
+            #añadir reporte resuelto por el moderador
             cur.execute(
                 "INSERT INTO moderadores_reportes (moderador_id, reporte_id) VALUES (%s, %s)",
                 (self.id, reporte_id)
