@@ -1,27 +1,33 @@
+#Obras.py
 from db_connection import get_conn
+import json
 
 class Obras:
-    def __init__(self, id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags=[], estado_publicacion= "PENDIENTE"):
+    def __init__(self, id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags=[], estado_publicacion= "PENDIENTE", fecha_subida=None, contador_likes=0):
         self.id = id
         self.titulo = titulo
         self.descripcion = descripcion
         self.autor_id = autor_id
         self.archivo_url = archivo_url
         self.miniatura_url = miniatura_url
-        self.tags = tags
+        self.tags = tags or []
         self.estado_publicacion = estado_publicacion
+        self.fecha_subida = fecha_subida
+        self.contador_likes = contador_likes
 
     @classmethod
-    def crear_obra(cls, titulo, descripcion, autor_id, archivo_url=None, miniatura_url=None, tags=[], estado_publicacion="PENDIENTE"):
+    def crear_obra(cls, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags=None, estado_publicacion="PENDIENTE"):
+        if tags is None:
+            tags = []
         conn = get_conn()
         try:
             cur = conn.cursor()
-            tags_str = ','.join(tags) if tags else None
+            tags_json = json.dumps(tags)
             cur.execute(
                 "INSERT INTO obras (titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
-                (titulo, descripcion, autor_id, archivo_url, miniatura_url, tags_str, estado_publicacion)
+                (titulo, descripcion, autor_id, archivo_url, miniatura_url, tags_json, estado_publicacion)
             )
-            obra_id = cur.fetchone()[0]
+            obra_id = cur.lastrowid
             conn.commit()
             return cls(obra_id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion)
         finally:
@@ -32,13 +38,16 @@ class Obras:
     def obtener_obra_por_id(cls, obra_id):
         conn = get_conn()
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion FROM obras WHERE id = %s", (obra_id,))
             row = cur.fetchone()
             if row:
-                tags = row[6].split(',') if row[6] else []
-                return cls(row[0], row[1], row[2], row[3], row[4], row[5], tags, row[7])
-            return None
+                tags = json.loads(row["tags"]) if row["tags"] else []
+                return cls(
+                    row["id"], row["titulo"], row["descripcion"], row["autor_id"],
+                    row["archivo_url"], row["miniatura_url"], tags,
+                    row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
+                )
         finally:
             cur.close()
             conn.close()
@@ -47,13 +56,17 @@ class Obras:
     def obtener_obras_por_autor(cls, autor_id):
         conn = get_conn()
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion FROM obras WHERE autor_id = %s", (autor_id,))
             rows = cur.fetchall()
             obras = []
             for row in rows:
-                tags = row[6].split(',') if row[6] else []
-                obras.append(cls(row[0], row[1], row[2], row[3], row[4], row[5], tags, row[7]))
+                tags = json.loads(row["tags"]) if row["tags"] else []
+                obras.append(cls(
+                    row["id"], row["titulo"], row["descripcion"], row["autor_id"],
+                    row["archivo_url"], row["miniatura_url"], tags,
+                    row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
+                ))
             return obras
         finally:    
             cur.close()
@@ -63,13 +76,19 @@ class Obras:
     def obtener_obra_por_titulo(cls, titulo):
         conn = get_conn()
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion FROM obras WHERE titulo = %s", (titulo,))
-            row = cur.fetchone()
-            if row:
-                tags = row[6].split(',') if row[6] else []
-                return cls(row[0], row[1], row[2], row[3], row[4], row[5], tags, row[7])
-            return None
+            rows = cur.fetchone()
+
+            obras = []
+            for row in rows:
+                tags = json.loads(row["tags"]) if row["tags"] else []
+                obras.append(cls(
+                    row["id"], row["titulo"], row["descripcion"], row["autor_id"],
+                    row["archivo_url"], row["miniatura_url"], tags,
+                    row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
+                ))
+            return obras
         finally:
             cur.close()
             conn.close()
@@ -117,11 +136,3 @@ class Obras:
         else:
             raise ValueError("Estado de publicación inválido. Debe ser 'PENDIENTE', 'PUBLICADO' o 'RECHAZADA'.")
         
-    
-
-
-        
-
-
-
-    

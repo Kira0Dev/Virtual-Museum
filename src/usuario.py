@@ -2,6 +2,7 @@
 from db_connection import get_conn
 import hashlib
 from obras import Obras
+from comentarios import Comentarios
 
 def hash_password(password: str) -> str:
     if password is None:
@@ -169,28 +170,24 @@ class Visitante(Usuario):
             conn.close()
     
     
-    def agregar_comentario(self, obra_id, contenido):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO comentarios (autor_id, obra_id, texto) VALUES (%s, %s, %s)",
-                (self.id, obra_id, contenido)
-            )
-            conn.commit()
-        finally:
-            cur.close()
-            conn.close()
+    def agregar_comentario(self, obra_id, texto):
+        return Comentarios.crear_comentario(obra_id, self.id, texto)
+        
 
     def eliminar_comentario(self, comentario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
-                "DELETE FROM comentarios WHERE id = %s AND autor_id = %s",
-                (comentario_id, self.id)
+                "SELECT autor_id FROM comentarios WHERE id = %s",
+                (comentario_id,)
             )
-            conn.commit()
+            autor_id = cur.fetchone()
+            if autor_id and autor_id[0] == self.id:
+                Comentarios.eliminar_comentario_por_id(comentario_id)
+                conn.commit()
+                return True
+            return False
         finally:
             cur.close()
             conn.close()
