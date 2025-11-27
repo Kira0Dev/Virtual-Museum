@@ -24,7 +24,7 @@ CREATE TABLE obras (
 );
 
 CREATE TABLE visitantes_favoritos (
-usuario_id INT,
+    usuario_id INT,
     obra_id INT,
     PRIMARY KEY (usuario_id, obra_id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)

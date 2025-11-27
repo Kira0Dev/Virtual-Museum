@@ -1,6 +1,5 @@
-# usuario.py
+# usuarios.py
 from db_connection import get_conn
-from libro import Libro
 import hashlib
 
 def hash_password(password: str) -> str:
@@ -8,25 +7,85 @@ def hash_password(password: str) -> str:
         return None
     return hashlib.sha256(password.encode("utf-8")).hexdigest()
 
+ROLES_VALIDOS = {"VISITANTE", "ARTISTA", "MODERADOR"}
+
 class Usuario:
-    def __init__(self, id_, nombre, role='bibliotecario'):
+    def __init__(self, id_, nombre, email, password_hash, fecha_registro ,rol='VISITANTE'):
+        if rol not in ROLES_VALIDOS:
+            raise ValueError(f"Rol inválido: {rol}")
         self.id = id_
         self.nombre = nombre
-        self.role = role
+        self.email = email
+        self.password_hash = password_hash
+        self.fecha_registro = fecha_registro
+        self.rol = rol
+
+
+    #instancias
+    @staticmethod
+    def _crear_instancia(id_, nombre, email, password_hash, fecha_registro, rol):
+        """Devuelve la subclase correcta según rol."""
+        if rol == "VISITANTE":
+            return Visitante(id_, nombre, email, password_hash, fecha_registro, rol)
+        if rol == "ARTISTA":
+            return Artista(id_, nombre, email, password_hash, fecha_registro, rol)
+        if rol == "MODERADOR":
+            return Moderador(id_, nombre, email, password_hash, fecha_registro, rol)
+        return Usuario(id_, nombre, email, password_hash, fecha_registro, rol)
+
+
+    #crear usuario
 
     @classmethod
-    def crear(cls, nombre, role='bibliotecario', password=None):
+    def crear(cls, nombre, email, password, rol='VISITANTE'):
+        if rol not in ROLES_VALIDOS:
+            raise ValueError(f"Rol inválido: {rol}")
         conn = get_conn()
         try:
             cur = conn.cursor()
-            pwd_hash = hash_password(password) if password else None
+            pwd_hash = hash_password(password)
             cur.execute(
-                "INSERT INTO usuarios (nombre, role, password) VALUES (%s, %s, %s)",
-                (nombre, role, pwd_hash)
+                "INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES (%s, %s, %s, %s)",
+                (nombre, email, pwd_hash, rol)
             )
             conn.commit()
+
             uid = cur.lastrowid
-            return cls(uid, nombre, role)
+            cur.execute("SELECT fecha_registro FROM usuarios WHERE id = %s", (uid,))
+            fecha = cur.fetchone()[0]
+
+            return cls._crear_instancia(uid, nombre, email, pwd_hash, fecha, rol)
+
+        finally:
+            cur.close()
+            conn.close()
+
+    #revisar contraseña
+    @classmethod
+    def autenticar(cls, email, password):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, nombre, email, password_hash, fecha_registro, rol
+                FROM usuarios
+                WHERE email = %s
+            """, (email,))
+            
+            fila = cur.fetchone()
+            #si no se encuentra el usuario
+            if not fila:
+                return None
+
+            stored_hash = fila[3]
+            #verificar contraseña
+            if hash_password(password) != stored_hash:
+                return None
+
+            return cls._crear_instancia(
+                fila[0], fila[1], fila[2], fila[3], fila[4], fila[5]
+            )
+
         finally:
             cur.close()
             conn.close()
@@ -36,72 +95,296 @@ class Usuario:
         conn = get_conn()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT id, nombre, role FROM usuarios ORDER BY nombre")
+            cur.execute("SELECT id, nombre, email, fecha_registro, rol FROM usuarios")
             rows = cur.fetchall()
-            return [cls(r[0], r[1], r[2]) for r in rows]
-        finally:
-            cur.close()
-            conn.close()
-
-    @classmethod
-    def buscar_por_nombre(cls, nombre):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT id, nombre, role FROM usuarios WHERE nombre = %s", (nombre,))
-            r = cur.fetchone()
-            return cls(r[0], r[1], r[2]) if r else None
-        finally:
-            cur.close()
-            conn.close()
-
-    @classmethod
-    def buscar_por_id(cls, id_):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT id, nombre, role FROM usuarios WHERE id = %s", (id_,))
-            r = cur.fetchone()
-            return cls(r[0], r[1], r[2]) if r else None
-        finally:
-            cur.close()
-            conn.close()
-
-    @classmethod
-    def autenticar(cls, nombre, password):
-        """Devuelve instancia Usuario si credenciales correctas, sino None."""
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT id, nombre, role, password FROM usuarios WHERE nombre = %s", (nombre,))
-            r = cur.fetchone()
-            if not r:
-                return None
-            stored_hash = r[3]
-            if stored_hash is None:
-                return None
-            if hash_password(password) == stored_hash:
-                return cls(r[0], r[1], r[2])
-            return None
-        finally:
-            cur.close()
-            conn.close()
-
-    def obtener_libros_prestados(self):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute("""
-                SELECT l.id, l.titulo, l.autor, l.disponible
-                FROM libros l
-                JOIN prestamos p ON p.libro_id = l.id
-                WHERE p.usuario_id = %s AND p.devuelto = 0
-            """, (self.id,))
-            rows = cur.fetchall()
-            return [Libro(r[0], r[1], r[2], r[3]) for r in rows]
+            return [
+                cls(
+                    id_=r[0],
+                    nombre=r[1],
+                    email=r[2],
+                    password_hash=None,
+                    fecha_registro=r[3],
+                    rol=r[4]
+                )
+                for r in rows
+            ]
         finally:
             cur.close()
             conn.close()
 
     def __str__(self):
-        return f"{self.nombre} ({self.role})"
+        return f"{self.nombre} ({self.rol})"
+
+
+#subclases
+
+class Visitante(Usuario):
+    def agregar_favorito(self, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO visitantes_favoritos (usuario_id, obra_id) VALUES (%s, %s)",
+                (self.id, obra_id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def listar_favoritos(self):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT obra_id FROM visitantes_favoritos WHERE usuario_id = %s",
+                (self.id,)
+            )
+            filas = cur.fetchall()
+            if not filas:
+                return []
+            cur.execute(
+                "SELECT id, titulo, autor_id, descripcion FROM obras WHERE id IN (%s)" %
+                ','.join(['%s'] * len(filas)),
+                tuple(fila[0] for fila in filas)
+            )
+            obras = cur.fetchall()
+            return obras
+        finally:
+            cur.close()
+            conn.close()
+    
+    def eliminar_favorito(self, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "DELETE FROM visitantes_favoritos WHERE usuario_id = %s AND obra_id = %s",
+                (self.id, obra_id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+    
+    
+    def agregar_comentario(self, obra_id, contenido):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO comentarios (autor_id, obra_id, texto) VALUES (%s, %s, %s)",
+                (self.id, obra_id, contenido)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def eliminar_comentario(self, comentario_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "DELETE FROM comentarios WHERE id = %s AND autor_id = %s",
+                (comentario_id, self.id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def crear_reporte(self, obra_id, motivo):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO reportes (autor_id, obra_id, motivo) VALUES (%s, %s, %s)",
+                (self.id, obra_id, motivo)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+class Artista(Usuario):
+    def agregar_biografia(self, biografia):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO artistas_info (usuario_id, biografia) VALUES (%s, %s)",
+                (self.id, biografia)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def crear_obra(self, titulo, descripcion, archivo_url = None, miniatura_url = None, tags = []):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO obras (titulo, autor_id, descripcion, archivo_url, miniatura_url, tags) VALUES (%s, %s, %s, %s, %s, %s)",
+                (titulo, self.id, descripcion, archivo_url, miniatura_url, ','.join(tags))
+            )
+            conn.commit()
+            obra_id = cur.lastrowid
+            return obra_id
+        finally:
+            cur.close()
+            conn.close()
+
+    def eliminar_obra(self, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "DELETE FROM obras WHERE id = %s AND autor_id = %s",
+                (obra_id, self.id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def ver_portafolio(self):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id, titulo, descripcion FROM obras WHERE autor_id = %s",
+                (self.id,)
+            )
+            obras = cur.fetchall()
+            return obras
+        finally:
+            cur.close()
+            conn.close()
+
+class Moderador(Usuario):
+    def aprobar_obra(self, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE obras SET estado_publicacion = 'PUBLICADO' WHERE id = %s",
+                (obra_id,)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+
+    def rechazar_obra(self, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE obras SET estado_publicacion = 'RECHAZADA' WHERE id = %s",
+                (obra_id,)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+    
+    def ver_reportes(self):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id, autor_id, obra_id, motivo, fecha FROM reportes WHERE estado = 'REVISION'"
+            )
+            reportes = cur.fetchall()
+            return reportes
+        finally:
+            cur.close()
+            conn.close()
+
+    def resolver_reporte_borrar_obra(self, reporte_id, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            #eliminar la obra
+            cur.execute(
+                "DELETE FROM obras WHERE id = %s",
+                (obra_id,)
+            )
+            #actualizar el estado del reporte
+            cur.execute(
+                "UPDATE reportes SET estado = 'RESUELTO' WHERE id = %s",
+                (reporte_id,)
+            )
+            cur.execute(
+                "INSERT INTO moderadores_reportes (moderador_id, reporte_id) VALUES (%s, %s)",
+                (self.id, reporte_id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+    
+    def resolver_reporte_ignorar(self, reporte_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            #actualizar el estado del reporte
+            cur.execute(
+                "UPDATE reportes SET estado = 'RESUELTO' WHERE id = %s",
+                (reporte_id,)
+            )
+            cur.execute(
+                "INSERT INTO moderadores_reportes (moderador_id, reporte_id) VALUES (%s, %s)",
+                (self.id, reporte_id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def listar_bloqueados(self):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT usuario_bloqueado_id FROM moderadores_bloqueos WHERE moderador_id = %s",
+                (self.id,)
+            )
+            filas = cur.fetchall()
+            bloqueados = [fila[0] for fila in filas]
+            return bloqueados
+        finally:
+            cur.close()
+            conn.close()
+    
+    def bloquear_usuario(self, usuario_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO moderadores_bloqueos (moderador_id, usuario_bloqueado_id) VALUES (%s, %s)",
+                (self.id, usuario_id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+
+    def desbloquear_usuario(self, usuario_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "DELETE FROM moderadores_bloqueos WHERE moderador_id = %s AND usuario_bloqueado_id = %s",
+                (self.id, usuario_id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+    
+
+
