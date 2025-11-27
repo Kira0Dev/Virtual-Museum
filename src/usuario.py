@@ -1,6 +1,7 @@
 # usuarios.py
 from db_connection import get_conn
 import hashlib
+from obras import Obras
 
 def hash_password(password: str) -> str:
     if password is None:
@@ -221,34 +222,6 @@ class Artista(Usuario):
             cur.close()
             conn.close()
 
-    def crear_obra(self, titulo, descripcion, archivo_url = None, miniatura_url = None, tags = []):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO obras (titulo, autor_id, descripcion, archivo_url, miniatura_url, tags) VALUES (%s, %s, %s, %s, %s, %s)",
-                (titulo, self.id, descripcion, archivo_url, miniatura_url, ','.join(tags))
-            )
-            conn.commit()
-            obra_id = cur.lastrowid
-            return obra_id
-        finally:
-            cur.close()
-            conn.close()
-
-    def eliminar_obra(self, obra_id):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                "DELETE FROM obras WHERE id = %s AND autor_id = %s",
-                (obra_id, self.id)
-            )
-            conn.commit()
-        finally:
-            cur.close()
-            conn.close()
-
     def ver_portafolio(self):
         conn = get_conn()
         try:
@@ -263,33 +236,32 @@ class Artista(Usuario):
             cur.close()
             conn.close()
 
-class Moderador(Usuario):
-    def aprobar_obra(self, obra_id):
+    def agregar_obra(self, titulo, descripcion, archivo_url=None, miniatura_url=None, tags=[], estado_publicacion="PENDIENTE"):
+        return Obras.crear_obra(titulo, descripcion, self.id, archivo_url, miniatura_url, tags, estado_publicacion)
+    
+    def eliminar_obra(self, obra_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
-            cur.execute(
-                "UPDATE obras SET estado_publicacion = 'PUBLICADO' WHERE id = %s",
-                (obra_id,)
-            )
-            conn.commit()
+            cur.execute("select autor_id from obras where id = %s", (obra_id,))
+            autor_id = cur.fetchone()
+            if autor_id and autor_id[0] == self.id:
+                Obras.eliminar_obra_por_id(obra_id)
+                conn.commit()
+                return True
+            return False
         finally:
             cur.close()
             conn.close()
+
+
+class Moderador(Usuario):
+    def aprobar_obra(self, obra_id):
+        Obras.actualizar_estado_publicacion(obra_id, "APROBADA")
 
 
     def rechazar_obra(self, obra_id):
-        conn = get_conn()
-        try:
-            cur = conn.cursor()
-            cur.execute(
-                "UPDATE obras SET estado_publicacion = 'RECHAZADA' WHERE id = %s",
-                (obra_id,)
-            )
-            conn.commit()
-        finally:
-            cur.close()
-            conn.close()
+        Obras.actualizar_estado_publicacion(obra_id, "RECHAZADA")
     
     def ver_reportes(self):
         conn = get_conn()
@@ -309,10 +281,7 @@ class Moderador(Usuario):
         try:
             cur = conn.cursor()
             #eliminar la obra
-            cur.execute(
-                "DELETE FROM obras WHERE id = %s",
-                (obra_id,)
-            )
+            Obras.eliminar_obra_por_id(obra_id)
             #actualizar el estado del reporte
             cur.execute(
                 "UPDATE reportes SET estado = 'RESUELTO' WHERE id = %s",
