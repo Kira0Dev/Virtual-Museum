@@ -115,7 +115,7 @@ class Usuario:
         finally:
             cur.close()
             conn.close()
-
+    
     def __str__(self):
         return f"{self.nombre} ({self.rol})"
 
@@ -388,6 +388,6 @@ class Moderador(Usuario):
         finally:
             cur.close()
             conn.close()
-    
 
+    
 
