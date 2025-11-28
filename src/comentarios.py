@@ -39,3 +39,6 @@ class Comentarios:
         finally:
             cur.close()
             conn.close()
+
+    def __str__(self):
+        return f"Comentario(id={self.id}, obra_id={self.obra_id}, autor_id={self.autor_id}, texto='{self.texto}', fecha={self.fecha}, estado='{self.estado}')"

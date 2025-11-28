@@ -136,3 +136,6 @@ class Obras:
         else:
             raise ValueError("Estado de publicación inválido. Debe ser 'PENDIENTE', 'PUBLICADO' o 'RECHAZADA'.")
         
+    def __str__(self):
+        return f"Obra(id={self.id}, titulo='{self.titulo}', descripcion='{self.descripcion}', autor_id={self.autor_id}, archivo_url='{self.archivo_url}', miniatura_url='{self.miniatura_url}', tags={self.tags}, estado_publicacion='{self.estado_publicacion}', fecha_subida={self.fecha_subida}, contador_likes={self.contador_likes})"
+        

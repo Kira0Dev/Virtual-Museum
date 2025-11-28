@@ -171,10 +171,8 @@ class Visitante(Usuario):
             cur.close()
             conn.close()
     
-    
     def agregar_comentario(self, obra_id, texto):
-        return Comentarios.crear_comentario(obra_id, self.id, texto)
-        
+        return Comentarios.crear_comentario(obra_id, self.id, texto)  
 
     def eliminar_comentario(self, comentario_id):
         conn = get_conn()
@@ -287,7 +285,6 @@ class Artista(Usuario):
     def agregar_obra(self, titulo, descripcion, archivo_url=None, miniatura_url=None, tags=[], estado_publicacion="PENDIENTE"):
         return Obras.crear_obra(titulo, descripcion, self.id, archivo_url, miniatura_url, tags, estado_publicacion)
     
-    
     def eliminar_obra(self, obra_id):
         conn = get_conn()
         try:
@@ -307,7 +304,6 @@ class Artista(Usuario):
 class Moderador(Usuario):
     def aprobar_obra(self, obra_id):
         Obras.actualizar_estado_publicacion(obra_id, "APROBADA")
-
 
     def rechazar_obra(self, obra_id):
         Obras.actualizar_estado_publicacion(obra_id, "RECHAZADA")

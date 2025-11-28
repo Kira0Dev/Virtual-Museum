@@ -109,3 +109,6 @@ class Salas:
         finally:
             cur.close()
             conn.close()
+
+    def __str__(self):
+        return f"Sala(id={self.id}, autor_id={self.autor_id}, nombre='{self.nombre}', descripcion='{self.descripcion}', privacidad='{self.privacidad}', codigo_acceso='{self.codigo_acceso}')"

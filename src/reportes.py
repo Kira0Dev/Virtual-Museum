@@ -67,3 +67,6 @@ class Reportes:
         finally:
             cur.close()
             conn.close()
+
+    def __str__(self):
+        return f"Reporte(id={self.id}, obra_id={self.obra_id}, autor_id={self.autor_id}, motivo='{self.motivo}', fecha={self.fecha}, estado='{self.estado}')"
