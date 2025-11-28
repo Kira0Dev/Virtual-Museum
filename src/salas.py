@@ -149,5 +149,28 @@ class Salas:
             cur.close()
             conn.close()
 
+    @classmethod
+    def show_obras_en_sala(cls, sala_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT obra_id FROM salas_obras WHERE sala_id = %s",
+                (sala_id,)
+            )
+            rows = cur.fetchall() 
+            obra_ids = [row[0] for row in rows]
+            return obra_ids
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al buscar obras de sala", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+
     def __str__(self):
         return f"Sala(id={self.id}, autor_id={self.autor_id}, nombre='{self.nombre}', descripcion='{self.descripcion}', privacidad='{self.privacidad}', codigo_acceso='{self.codigo_acceso}')"

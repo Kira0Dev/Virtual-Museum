@@ -114,19 +114,21 @@ def abrir_ventana_visitante():
         sala_id = simpledialog.askinteger("Entrar a sala", "Ingresa el ID de la sala:")
         if sala_id is None:
             return
-
-        codigo = simpledialog.askstring("Código de acceso", "Ingresa el código (si es privada):")
-        if codigo is None:
-            codigo = ""
-
+        
         #intentar entrar
         from salas import Salas
-        sala = Salas.entrar_sala_id(sala_id, codigo)
+        sala = Salas.obtener_sala_por_id(sala_id)
 
         if sala is None:
-            messagebox.showerror("Error", "No se pudo entrar a la sala. Código o ID incorrecto.")
+            messagebox.showerror("Error", "No se encontró la sala")
             return
-
+        
+        if sala.privacidad == "PRIVADA":
+            codigo = simpledialog.askstring("Código de acceso", "Ingresa el código de la sala:")
+            if codigo != sala.codigo_acceso:
+                messagebox.showerror("Error", "Código erroneo")
+                return
+            
         import visitante_salas
         visitante_salas.abrir_Salas(sala)
 

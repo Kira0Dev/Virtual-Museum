@@ -57,10 +57,32 @@ class Obras:
                     row["archivo_url"], row["miniatura_url"], tags,
                     row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
                 )
-            
         except Exception as e:
             conn.rollback()
             logging.error(f"Error al obtener obra por id", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+            
+    @classmethod
+    def show_obra_visitante_por_id(cls, obra_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor(dictionary=True)
+            cur.execute("SELECT id, titulo, descripcion, autor_id, tags FROM obras WHERE id = %s", (obra_id,))
+            #cur.execute("SELECT id, titulo, descripcion, autor_id, tags FROM obras WHERE id = %s AND estado_publicacion = 'PUBLICADO'", (obra_id,))
+            row = cur.fetchone()
+            if not row:
+                return None
+            row["tags"] = json.loads(row["tags"]) if row["tags"] else []
+            return row
+
+            
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener obra por id para visitante", exc_info=True)
             raise
 
         finally:
