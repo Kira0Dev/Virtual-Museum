@@ -39,3 +39,5 @@ text_biografia.pack()
 
 btn_guardar_biografia = tk.Button(root, text="Guardar Biografía", font=("Arial", 12), command=crear_biografia)
 btn_guardar_biografia.pack(pady=10)
+
+root.mainloop()

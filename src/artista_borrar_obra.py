@@ -58,3 +58,5 @@ btn_borrar.pack(pady=20)
 btn_cancelar = tk.Button(root, text="Cancelar", font=("Arial", 10), command=lambda: ejecutar_archivo("artista_main_window.py"))
 btn_cancelar.pack(pady=10)
 
+root.mainloop()
+

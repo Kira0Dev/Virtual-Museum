@@ -39,3 +39,5 @@ text_biografia.insert(tk.END, artista_biografia)
 btn_actualizar_biografia = tk.Button(root, text="Guardar Biografía", font=("Arial", 12), command=guardar_biografia)
 btn_actualizar_biografia.pack(pady=10)
 
+root.mainloop()
+
