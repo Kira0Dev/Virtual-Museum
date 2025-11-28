@@ -191,7 +191,9 @@ class Obras:
         try:
             cur = conn.cursor()
             #cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10")
-            cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10 WHERE estado_publicacion = 'PUBLICADO'")
+            sql = "SELECT titulo, descripcion, autor_id FROM obras WHERE estado_publicacion = %s LIMIT %s"
+            params = ("PUBLICADO", 10)
+            cur.execute(sql, params)
             rows = cur.fetchall()
             obras = []
             for row in rows:

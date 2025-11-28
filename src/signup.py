@@ -44,9 +44,9 @@ def ejecutar_archivo(nombre_archivo):
     root.destroy()
 
     #abrir la ventana correta de forma directa (top-level) y sin perder session
-    if nombre_archivo == "artista_main_window.py":
-        import artista_main_window
-        artista_main_window.abrir_ventana_artista()
+    if nombre_archivo == "artista_crear_biografia.py":
+        import artista_crear_biografia
+        artista_crear_biografia.abrir_ventana_biografia()
 
     elif nombre_archivo == "moderador_main_window.py":
         import moderador_main_window
