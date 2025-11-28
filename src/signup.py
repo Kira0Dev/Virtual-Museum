@@ -56,6 +56,12 @@ def ejecutar_archivo(nombre_archivo):
         import visitante_main_window
         visitante_main_window.abrir_ventana_visitante()
 
+
+def volver(nombre_archivo):
+    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
+    subprocess.Popen([sys.executable, ruta])
+    root.destroy()
+
 #ventana
 root = tk.Tk()
 root.title("Crear cuenta")
@@ -87,7 +93,7 @@ combo_rol.current(0)
 btn_registrar = tk.Button(root, text="Registrarse", font=("Arial", 12), command=registrar_usuario)
 btn_registrar.pack(pady=20)
 
-btn_regresar = tk.Button(root, text="Regresar", font=("Arial", 10), command=lambda: ejecutar_archivo("execute.py"))
+btn_regresar = tk.Button(root, text="Regresar", font=("Arial", 10), command=lambda: volver("execute.py"))
 btn_regresar.pack(pady=10)
 
 root.mainloop()

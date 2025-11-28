@@ -1,6 +1,7 @@
 # login.py
 from usuario import Usuario, hash_password
 import session
+import subprocess
 
 import tkinter as tk
 from tkinter import messagebox
@@ -54,6 +55,12 @@ def ejecutar_archivo(nombre_archivo):
         visitante_main_window.abrir_ventana_visitante()
 
 
+def volver(nombre_archivo):
+    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
+    subprocess.Popen([sys.executable, ruta])
+    root.destroy()
+
+
 # Ventana
 root = tk.Tk()
 root.title("Iniciar sesión")
@@ -73,7 +80,7 @@ entry_password.pack()
 btn_iniciar = tk.Button(root, text="Iniciar sesión", font=("Arial", 12), command=iniciar_sesion)
 btn_iniciar.pack(pady=20)
 
-btn_regresar = tk.Button(root, text="Regresar", font=("Arial", 10), command=lambda: ejecutar_archivo("execute.py"))
+btn_regresar = tk.Button(root, text="Regresar", font=("Arial", 10), command=lambda: volver("execute.py"))
 btn_regresar.pack(pady=10)
 
 root.mainloop()
