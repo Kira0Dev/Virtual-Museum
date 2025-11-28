@@ -71,8 +71,8 @@ class Obras:
         conn = get_conn()
         try:
             cur = conn.cursor(dictionary=True)
-            cur.execute("SELECT id, titulo, descripcion, autor_id, tags FROM obras WHERE id = %s", (obra_id,))
-            #cur.execute("SELECT id, titulo, descripcion, autor_id, tags FROM obras WHERE id = %s AND estado_publicacion = 'PUBLICADO'", (obra_id,))
+            #cur.execute("SELECT id, titulo, descripcion, autor_id, tags FROM obras WHERE id = %s", (obra_id,))
+            cur.execute("SELECT id, titulo, descripcion, autor_id, tags FROM obras WHERE id = %s AND estado_publicacion = 'PUBLICADO'", (obra_id,))
             row = cur.fetchone()
             if not row:
                 return None
@@ -162,7 +162,7 @@ class Obras:
         finally:
             cur.close()
             conn.close()
-            
+
     @classmethod
     def listar_obras_pendientes(cls):
         conn = get_conn()
@@ -190,8 +190,8 @@ class Obras:
         conn = get_conn()
         try:
             cur = conn.cursor()
-            cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10")
-            #cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10 WHERE estado_publicacion = 'PUBLICADO'")
+            #cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10")
+            cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10 WHERE estado_publicacion = 'PUBLICADO'")
             rows = cur.fetchall()
             obras = []
             for row in rows:
