@@ -27,7 +27,7 @@ class Obras:
             cur = conn.cursor()
             tags_json = json.dumps(tags)
             cur.execute(
-                "INSERT INTO obras (titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id",
+                "INSERT INTO obras (titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion) VALUES (%s, %s, %s, %s, %s, %s, %s)",
                 (titulo, descripcion, autor_id, archivo_url, miniatura_url, tags_json, estado_publicacion)
             )
             obra_id = cur.lastrowid

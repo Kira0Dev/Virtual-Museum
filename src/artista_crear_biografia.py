@@ -1,43 +1,33 @@
-#artista_crear_biografia.py
-import session
-from usuario import Artista
-
+# artista_crear_biografia.py
 import tkinter as tk
 from tkinter import messagebox
-import subprocess
-import sys
-import os
+from usuario import Artista
+import session
 
-def crear_biografia():
-    biografia = text_biografia.get("1.0", tk.END).strip()
+def abrir_ventana_biografia():
+    ventana = tk.Toplevel()
+    ventana.title("Crear Biografía de Artista")
+    ventana.geometry("400x300")
 
-    if not biografia:
-        messagebox.showerror("Error", "La biografía no puede estar vacía")
-        return
+    label_biografia = tk.Label(ventana, text="Por favor, escribe tu Biografía:")
+    label_biografia.pack(pady=10)
 
-    artista_id = session.usuario_id
-    Artista.agregar_biografia(artista_id, biografia)
-    messagebox.showinfo("Éxito", "Biografía guardada exitosamente")
-    ejecutar_archivo("artista_main_window.py")
+    text_biografia = tk.Text(ventana, width=40, height=10)
+    text_biografia.pack()
 
-def ejecutar_archivo(nombre_archivo):
-    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
-    subprocess.Popen([sys.executable, ruta])
-    root.destroy()
+    def crear_biografia():
+        biografia = text_biografia.get("1.0", tk.END).strip()
 
-#ventana
-root = tk.Tk()
-root.title("Crear Biografía de Artista")
-root.geometry("400x300")
+        if not biografia:
+            messagebox.showerror("Error", "La biografía no puede estar vacía")
+            return
 
-#widgets
-label_biografia = tk.Label(root, text="Por favor, escribe tu Biografía:")
-label_biografia.pack(pady=10)
+        Artista.agregar_biografia(session.usuario_id, biografia)
 
-text_biografia = tk.Text(root, width=40, height=10)
-text_biografia.pack()
+        messagebox.showinfo("Éxito", "Biografía guardada exitosamente")
+        ventana.destroy()  # Cerramos esta ventana
+        import artista_main_window
+        artista_main_window.abrir_ventana_artista()
 
-btn_guardar_biografia = tk.Button(root, text="Guardar Biografía", font=("Arial", 12), command=crear_biografia)
-btn_guardar_biografia.pack(pady=10)
-
-root.mainloop()
+    btn_guardar = tk.Button(ventana, text="Guardar Biografía", command=crear_biografia)
+    btn_guardar.pack(pady=10)

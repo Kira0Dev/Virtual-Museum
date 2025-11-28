@@ -1,59 +1,39 @@
-#artista_crear_biografia.py
-from usuario import Usuario, hash_password
-import session
-from usuario import Visitante
-from usuario import Artista
-from usuario import Moderador
-from obras import Obras
-from reportes import Reportes
-from salas import Salas
-from comentarios import Comentarios
-
+# artista_portafolio
 import tkinter as tk
 from tkinter import messagebox
-from tkinter import ttk
-import subprocess
-import sys
-import os
+from usuario import Artista
+import session
 
-def mostrar_portafolio():
-    #crear objeto del artista usando su ID en sesión
-    artista = Artista(session.usuario_id)
 
-    try:
-        obras = artista.ver_portafolio()
-    except Exception as e:
-        messagebox.showerror("Error", f"No se pudo obtener el portafolio:\n{e}")
-        return
+def abrir_ventana_portafolio():
+    ventana = tk.Toplevel()
+    ventana.title("Mi Portafolio")
+    ventana.geometry("500x300")
 
-    listbox.delete(0, tk.END)
+    listbox = tk.Listbox(ventana, width=60, height=15)
+    listbox.pack(pady=10)
 
-    #mostrar todas las obras
-    if not obras:
-        listbox.insert(tk.END, "No tienes obras registradas")
-        return
+    def mostrar_portafolio():
+        try:
+            
+            obras = Artista.ver_portafolio(session.usuario_id)
+        except Exception as e:
+            messagebox.showerror("Error", f"No se pudo obtener el portafolio:\n{e}")
+            return
 
-    for obra in obras:
-        obra_id, titulo, descripcion = obra
-        listbox.insert(tk.END, f"{obra_id} - {titulo} | {descripcion}")
+        listbox.delete(0, tk.END)
 
-def ejecutar_archivo(nombre_archivo):
-    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
-    subprocess.Popen([sys.executable, ruta])
-    root.destroy()
+        if not obras:
+            listbox.insert(tk.END, "No tienes obras registradas.")
+            return
 
-#ventana
-root = tk.Tk()
-root.title("Mi Portafolio")
-root.geometry("500x300")
+        for obra in obras:
+            obra_id, titulo, descripcion = obra
+            listbox.insert(tk.END, f"{obra_id} - {titulo} | {descripcion}")
 
-btn_cargar = tk.Button(root, text="Cargar Portafolio", command=mostrar_portafolio)
-btn_cargar.pack(pady=10)
+  
+    btn_cargar = tk.Button(ventana, text="Cargar Portafolio", command=mostrar_portafolio)
+    btn_cargar.pack(pady=5)
 
-listbox = tk.Listbox(root, width=60, height=15)
-listbox.pack()
-
-btn_regresar = tk.Button(root, text="Regresar", font=("Arial", 10), command=lambda: ejecutar_archivo("artista_main_window.py"))
-btn_regresar.pack(pady=10)
-
-root.mainloop()
+    btn_regresar = tk.Button(ventana, text="Regresar", font=("Arial", 10), command=ventana.destroy)
+    btn_regresar.pack(pady=10)

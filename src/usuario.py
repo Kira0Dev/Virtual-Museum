@@ -411,13 +411,14 @@ class Visitante(Usuario):
         return sala
 
 class Artista(Usuario):
-    def agregar_biografia(self, biografia):
+    @staticmethod
+    def agregar_biografia(usuario_id, biografia):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO artistas_info (usuario_id, biografia) VALUES (%s, %s)",
-                (self.id, biografia)
+                (usuario_id, biografia)
             )
             conn.commit()
 
@@ -430,15 +431,17 @@ class Artista(Usuario):
             cur.close()
             conn.close()
 
-    def cambiar_biografia(self, biografia):
+    @staticmethod
+    def cambiar_biografia(usuario_id, biografia):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "UPDATE artistas_info SET biografia = %s WHERE usuario_id = %s",
-                (biografia, self.id)
+                (biografia, usuario_id)
             )
             conn.commit()
+            return True
 
         except Exception as e:
             conn.rollback()
@@ -449,13 +452,14 @@ class Artista(Usuario):
             cur.close()
             conn.close()
         
-    def obtener_biografia(self):
+    @staticmethod
+    def obtener_biografia(usuario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "SELECT biografia FROM artistas_info WHERE usuario_id = %s",
-                (self.id,)
+                (usuario_id,)
             )
             fila = cur.fetchone()
             if fila:
@@ -471,13 +475,14 @@ class Artista(Usuario):
             cur.close()
             conn.close()
 
-    def ver_portafolio(self):
+    @staticmethod
+    def ver_portafolio(usuario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "SELECT id, titulo, descripcion FROM obras WHERE autor_id = %s",
-                (self.id,)
+                (usuario_id,)
             )
             obras = cur.fetchall()
             return obras

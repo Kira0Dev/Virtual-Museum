@@ -34,13 +34,14 @@ def registrar_usuario():
     messagebox.showinfo("Éxito", "Usuario registrado exitosamente")
     if rol == "ARTISTA":
         ejecutar_archivo("artista_crear_biografia.py")
-    #LLevar a otra ventana
 
 
 def ejecutar_archivo(nombre_archivo):
-    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
-    subprocess.Popen([sys.executable, ruta])
     root.destroy()
+
+    if nombre_archivo == "artista_crear_biografia.py":
+        import artista_crear_biografia
+        artista_crear_biografia.abrir_ventana_biografia()
 
 #ventana
 root = tk.Tk()

@@ -1,20 +1,12 @@
-#login.py
+# login.py
 from usuario import Usuario, hash_password
 import session
-from usuario import Visitante
-from usuario import Artista
-from usuario import Moderador
-from obras import Obras
-from reportes import Reportes
-from salas import Salas
-from comentarios import Comentarios
 
 import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk
-import subprocess
-import sys
 import os
+import sys
 
 def iniciar_sesion():
     email = entry_email.get().strip()
@@ -26,29 +18,48 @@ def iniciar_sesion():
 
     password_hashed = hash_password(password)
 
-
     if Usuario.autenticar(email, password_hashed):
-        messagebox.showinfo("Éxito", "Inicio de sesión exitoso")
         session.usuario_id = Usuario.obtener_id_por_email(email)
         session.usuario_nombre = Usuario.obtener_nombre_por_id(session.usuario_id)
         session.usuario_email = email
         session.usuario_rol = Usuario.obtener_rol_por_email(email)
-        # Aquí llevarías a la ventana principal de la aplicación
+
+        messagebox.showinfo("Éxito", "Inicio de sesión exitoso")
+
+        # Redirige según rol
+        if session.usuario_rol == "ARTISTA":
+            ejecutar_archivo("artista_main_window.py")
+        elif session.usuario_rol == "MODERADOR":
+            ejecutar_archivo("moderador_main_window.py")
+        else:
+            ejecutar_archivo("visitante_main_window.py")
     else:
         messagebox.showerror("Error", "Email o contraseña incorrectos")
 
 
 def ejecutar_archivo(nombre_archivo):
-    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
-    subprocess.Popen([sys.executable, ruta])
     root.destroy()
 
-#ventana
+    # Abrir la ventana correta de forma directa (top-level) y sin perder session
+    if nombre_archivo == "artista_main_window.py":
+        import artista_main_window
+        artista_main_window.abrir_ventana_artista()
+
+    elif nombre_archivo == "moderador_main_window.py":
+        import moderador_main_window
+        moderador_main_window.abrir_ventana_moderador()
+
+    elif nombre_archivo == "visitante_main_window.py":
+        import visitante_main_window
+        visitante_main_window.abrir_ventana_visitante()
+
+
+# Ventana
 root = tk.Tk()
 root.title("Iniciar sesión")
 root.geometry("350x300")
 
-#widgets
+# Widgets
 label_email = tk.Label(root, text="Email:")
 label_email.pack(pady=5)
 entry_email = tk.Entry(root, width=30)
