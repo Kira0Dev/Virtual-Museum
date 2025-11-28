@@ -534,27 +534,31 @@ class Artista(Usuario):
 
 
 class Moderador(Usuario):
-    def aprobar_obra(self, obra_id):
-        Obras.actualizar_estado_publicacion(obra_id, "APROBADA")
+    @staticmethod
+    def aprobar_obra(obra_id):
+        Obras.actualizar_estado_publicacion(obra_id, "PUBLICADO")
 
-    def rechazar_obra(self, obra_id):
+    @staticmethod
+    def rechazar_obra(obra_id):
         Obras.actualizar_estado_publicacion(obra_id, "RECHAZADA")
     
-    def ver_reportes(self):
+    @staticmethod
+    def ver_reportes():
         return Reportes.obtener_reportes_pendientes()
 
-    def resolver_reporte_borrar_obra(self, reporte_id, obra_id):
+    @staticmethod
+    def resolver_reporte_borrar_obra(usuario_id, reporte_id, obra_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
-            #eliminar la obra
-            Obras.eliminar_obra_por_id(obra_id)
+            #marcar obra como rechazada para evitar errores
+            Obras.actualizar_estado_publicacion(obra_id, "RECHAZADA")
             #actualizar el estado del reporte
             Reportes.resolver_reporte(reporte_id)
             #añadir reporte resuelto por el moderador
             cur.execute(
                 "INSERT INTO moderadores_reportes (moderador_id, reporte_id) VALUES (%s, %s)",
-                (self.id, reporte_id)
+                (usuario_id, reporte_id)
             )
             conn.commit()
 
@@ -567,7 +571,8 @@ class Moderador(Usuario):
             cur.close()
             conn.close()
     
-    def resolver_reporte_ignorar(self, reporte_id):
+    @staticmethod
+    def resolver_reporte_ignorar(usuario_id, reporte_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
@@ -575,7 +580,7 @@ class Moderador(Usuario):
             Reportes.resolver_reporte(reporte_id)
             cur.execute(
                 "INSERT INTO moderadores_reportes (moderador_id, reporte_id) VALUES (%s, %s)",
-                (self.id, reporte_id)
+                (usuario_id, reporte_id)
             )
             conn.commit()
 
@@ -588,13 +593,14 @@ class Moderador(Usuario):
             cur.close()
             conn.close()
 
-    def listar_bloqueados(self):
+    @staticmethod
+    def listar_bloqueados(usuario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "SELECT usuario_bloqueado_id FROM moderadores_bloqueos WHERE moderador_id = %s",
-                (self.id,)
+                (usuario_id,)
             )
             filas = cur.fetchall()
             bloqueados = [fila[0] for fila in filas]
@@ -609,13 +615,14 @@ class Moderador(Usuario):
             cur.close()
             conn.close()
     
-    def bloquear_usuario(self, usuario_id):
+    @staticmethod
+    def bloquear_usuario(moder_id, usuario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO moderadores_bloqueos (moderador_id, usuario_bloqueado_id) VALUES (%s, %s)",
-                (self.id, usuario_id)
+                (moder_id, usuario_id)
             )
             conn.commit()
 
@@ -628,13 +635,14 @@ class Moderador(Usuario):
             cur.close()
             conn.close()
 
-    def desbloquear_usuario(self, usuario_id):
+    @staticmethod
+    def desbloquear_usuario(moder_id, usuario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "DELETE FROM moderadores_bloqueos WHERE moderador_id = %s AND usuario_bloqueado_id = %s",
-                (self.id, usuario_id)
+                (moder_id, usuario_id)
             )
             conn.commit()
 

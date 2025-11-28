@@ -162,6 +162,28 @@ class Obras:
         finally:
             cur.close()
             conn.close()
+            
+    @classmethod
+    def listar_obras_pendientes(cls):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion FROM obras WHERE estado_publicacion = 'PENDIENTE'")
+            rows = cur.fetchall()
+            obras = []
+            for row in rows:
+                tags = row[6].split(',') if row[6] else []
+                obras.append(cls(row[0], row[1], row[2], row[3], row[4], row[5], tags, row[7]))
+            return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar obras", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
 
     @classmethod
     def show_obras_visitante(cls):
