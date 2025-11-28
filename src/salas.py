@@ -1,5 +1,8 @@
 #salas.py
+import logging
 from db_connection import get_conn
+
+logging.basicConfig(level=logging.ERROR)
 
 privacidad_options = ["PUBLICA", "PRIVADA"]
 
@@ -27,6 +30,12 @@ class Salas:
             conn.commit()
             sala_id = cur.lastrowid
             return cls(sala_id, autor_id, nombre, descripcion, privacidad, codigo_acceso)
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al crear sala", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -43,6 +52,12 @@ class Salas:
                 (sala_id,)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar sala", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -58,6 +73,12 @@ class Salas:
             filas = cur.fetchall()
             salas = [cls(*fila) for fila in filas]
             return salas
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar salas publicas", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -75,6 +96,12 @@ class Salas:
             if fila:
                 return cls(*fila)
             return None
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener sala por id", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -92,6 +119,12 @@ class Salas:
             filas = cur.fetchall()
             salas = [cls(*fila) for fila in filas]
             return salas
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al buscar sala por nombre", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -106,6 +139,12 @@ class Salas:
                 (sala_id, obra_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al añadir obra a sala", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()

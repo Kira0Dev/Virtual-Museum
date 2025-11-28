@@ -1,10 +1,13 @@
 # usuarios.py
+import logging
 from db_connection import get_conn
 import hashlib
 from obras import Obras
 from comentarios import Comentarios
 from reportes import Reportes
 from salas import Salas
+
+logging.basicConfig(level=logging.ERROR)
 
 def hash_password(password: str) -> str:
     if password is None:
@@ -59,6 +62,11 @@ class Usuario:
             fecha = cur.fetchone()[0]
 
             return cls._crear_instancia(uid, nombre, email, pwd_hash, fecha, rol)
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al crear usuario:", exc_info=True)
+            raise
 
         finally:
             cur.close()
@@ -89,6 +97,11 @@ class Usuario:
             return cls._crear_instancia(
                 fila[0], fila[1], fila[2], fila[3], fila[4], fila[5]
             )
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al autenticar", exc_info=True)
+            raise
 
         finally:
             cur.close()
@@ -112,6 +125,12 @@ class Usuario:
                 )
                 for r in rows
             ]
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar usuarios", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -132,6 +151,12 @@ class Visitante(Usuario):
                 (self.id, obra_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al agregar favorito", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -154,6 +179,12 @@ class Visitante(Usuario):
             )
             obras = cur.fetchall()
             return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar favoritos", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -167,6 +198,12 @@ class Visitante(Usuario):
                 (self.id, obra_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar favorito", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -188,6 +225,12 @@ class Visitante(Usuario):
                 conn.commit()
                 return True
             return False
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar comentario", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -212,6 +255,12 @@ class Visitante(Usuario):
                 conn.commit()
                 return True
             return False
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar sala", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -235,6 +284,12 @@ class Artista(Usuario):
                 (self.id, biografia)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al agregar biografia", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -248,6 +303,12 @@ class Artista(Usuario):
                 (biografia, self.id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al cambiar biografia", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -264,6 +325,12 @@ class Artista(Usuario):
             if fila:
                 return fila[0]
             return None
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener biografia", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -278,6 +345,12 @@ class Artista(Usuario):
             )
             obras = cur.fetchall()
             return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al ver portafolio", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -296,6 +369,12 @@ class Artista(Usuario):
                 conn.commit()
                 return True
             return False
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar obra", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -325,6 +404,12 @@ class Moderador(Usuario):
                 (self.id, reporte_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al resolver reporte y borrar obra", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -340,6 +425,12 @@ class Moderador(Usuario):
                 (self.id, reporte_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al resolver reporte ignorando", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -355,6 +446,12 @@ class Moderador(Usuario):
             filas = cur.fetchall()
             bloqueados = [fila[0] for fila in filas]
             return bloqueados
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar bloqueados", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -368,6 +465,12 @@ class Moderador(Usuario):
                 (self.id, usuario_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al bloquear usuario", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -381,6 +484,12 @@ class Moderador(Usuario):
                 (self.id, usuario_id)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al desbloquear usuario", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()

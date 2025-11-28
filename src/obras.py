@@ -1,6 +1,9 @@
 #obras.py
+import logging
 from db_connection import get_conn
 import json
+
+logging.basicConfig(level=logging.ERROR)
 
 class Obras:
     def __init__(self, id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags=[], estado_publicacion= "PENDIENTE", fecha_subida=None, contador_likes=0):
@@ -30,6 +33,12 @@ class Obras:
             obra_id = cur.lastrowid
             conn.commit()
             return cls(obra_id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion)
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al crear obra", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -48,6 +57,12 @@ class Obras:
                     row["archivo_url"], row["miniatura_url"], tags,
                     row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
                 )
+            
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener obra por id", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -68,6 +83,12 @@ class Obras:
                     row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
                 ))
             return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener obras por autor", exc_info=True)
+            raise
+
         finally:    
             cur.close()
             conn.close()
@@ -89,6 +110,12 @@ class Obras:
                     row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
                 ))
             return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener obra por titulo", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -105,6 +132,12 @@ class Obras:
                 tags = row[6].split(',') if row[6] else []
                 obras.append(cls(row[0], row[1], row[2], row[3], row[4], row[5], tags, row[7]))
             return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar obras", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -117,6 +150,12 @@ class Obras:
             cur.execute("DELETE FROM obras WHERE id = %s", (obra_id,))
             conn.commit()
             return cur.rowcount > 0
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar obra", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -130,6 +169,12 @@ class Obras:
                 cur.execute("UPDATE obras SET estado_publicacion = %s WHERE id = %s", (nuevo_estado, obra_id))
                 conn.commit()
                 return cur.rowcount > 0
+            
+            except Exception as e:
+                conn.rollback()
+                logging.error(f"Error al actualizar estado de publicacion", exc_info=True)
+                raise
+
             finally:
                 cur.close()
                 conn.close()

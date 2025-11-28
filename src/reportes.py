@@ -1,5 +1,8 @@
 #reportes.py
+import logging
 from db_connection import get_conn
+
+logging.basicConfig(level=logging.ERROR)
 
 class Reportes:
     def __init__(self, id, obra_id, autor_id, motivo, fecha=None, estado='REVISION'):
@@ -27,6 +30,12 @@ class Reportes:
             )
             fila = cur.fetchone()
             return cls(reporte_id, obra_id, autor_id, motivo, fila[0], fila[1])
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al crear reporte", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -42,6 +51,12 @@ class Reportes:
             filas = cur.fetchall()
             reportes = [cls(*fila) for fila in filas]
             return reportes
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener reportes pendientes", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -64,6 +79,12 @@ class Reportes:
                 (reporte_id,)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al resolver reporte", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()

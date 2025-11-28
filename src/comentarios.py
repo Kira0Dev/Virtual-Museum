@@ -1,5 +1,8 @@
 #Comentarios.py
+import logging
 from db_connection import get_conn
+
+logging.basicConfig(level=logging.ERROR)
 
 class Comentarios:
     def __init__(self,id, obra_id, autor_id, texto, fecha=None, estado='VISIBLE'):
@@ -22,6 +25,12 @@ class Comentarios:
             resultado = cur.fetchone()
             conn.commit()
             return cls(resultado[0], obra_id, autor_id, texto, resultado[1])
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al crear comentario", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
@@ -36,6 +45,12 @@ class Comentarios:
                 (comentario_id,)
             )
             conn.commit()
+
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar comentario", exc_info=True)
+            raise
+
         finally:
             cur.close()
             conn.close()
