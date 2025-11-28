@@ -34,14 +34,27 @@ def registrar_usuario():
     messagebox.showinfo("Éxito", "Usuario registrado exitosamente")
     if rol == "ARTISTA":
         ejecutar_archivo("artista_crear_biografia.py")
+    elif rol == 'VISITANTE':
+        ejecutar_archivo("visitante_main_window.py")
+    elif rol == 'MODERADOR':
+        ejecutar_archivo("moderador_main_window.py")
 
 
 def ejecutar_archivo(nombre_archivo):
     root.destroy()
 
-    if nombre_archivo == "artista_crear_biografia.py":
-        import artista_crear_biografia
-        artista_crear_biografia.abrir_ventana_biografia()
+    #abrir la ventana correta de forma directa (top-level) y sin perder session
+    if nombre_archivo == "artista_main_window.py":
+        import artista_main_window
+        artista_main_window.abrir_ventana_artista()
+
+    elif nombre_archivo == "moderador_main_window.py":
+        import moderador_main_window
+        moderador_main_window.abrir_ventana_moderador()
+
+    elif nombre_archivo == "visitante_main_window.py":
+        import visitante_main_window
+        visitante_main_window.abrir_ventana_visitante()
 
 #ventana
 root = tk.Tk()

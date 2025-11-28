@@ -80,7 +80,7 @@ class Obras:
                 obras.append(cls(
                     row["id"], row["titulo"], row["descripcion"], row["autor_id"],
                     row["archivo_url"], row["miniatura_url"], tags,
-                    row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
+                    row["estado_publicacion"]
                 ))
             return obras
         
@@ -99,21 +99,20 @@ class Obras:
         try:
             cur = conn.cursor(dictionary=True)
             cur.execute("SELECT id, titulo, descripcion, autor_id, archivo_url, miniatura_url, tags, estado_publicacion FROM obras WHERE titulo = %s", (titulo,))
-            rows = cur.fetchone()
+            row = cur.fetchone()
 
-            obras = []
-            for row in rows:
-                tags = json.loads(row["tags"]) if row["tags"] else []
-                obras.append(cls(
-                    row["id"], row["titulo"], row["descripcion"], row["autor_id"],
-                    row["archivo_url"], row["miniatura_url"], tags,
-                    row["estado_publicacion"], row["fecha_subida"], row["contador_likes"]
-                ))
-            return obras
-        
+            if row is None:
+                return None
+
+            tags = json.loads(row["tags"]) if row["tags"] else []
+
+            return cls(
+                row["id"], row["titulo"], row["descripcion"], row["autor_id"],
+                row["archivo_url"], row["miniatura_url"], tags, row["estado_publicacion"]
+            )
+
         except Exception as e:
-            conn.rollback()
-            logging.error(f"Error al obtener obra por titulo", exc_info=True)
+            print("Error:", e)
             raise
 
         finally:
@@ -131,6 +130,33 @@ class Obras:
             for row in rows:
                 tags = row[6].split(',') if row[6] else []
                 obras.append(cls(row[0], row[1], row[2], row[3], row[4], row[5], tags, row[7]))
+            return obras
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al listar obras", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+    @classmethod
+    def show_obras_visitante(cls):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10")
+            #cur.execute("SELECT titulo, descripcion, autor_id FROM obras LIMIT 10 WHERE estado_publicacion = 'PUBLICADO'")
+            rows = cur.fetchall()
+            obras = []
+            for row in rows:
+                obra = {
+                    "titulo": row[0],
+                    "descripcion": row[1],
+                    "autor_id": row[2]
+                }
+                obras.append(obra)
             return obras
         
         except Exception as e:

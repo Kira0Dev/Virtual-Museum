@@ -278,13 +278,14 @@ class Usuario:
 #subclases
 
 class Visitante(Usuario):
-    def agregar_favorito(self, obra_id):
+    @staticmethod
+    def agregar_favorito(usuario_id, obra_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO visitantes_favoritos (usuario_id, obra_id) VALUES (%s, %s)",
-                (self.id, obra_id)
+                (usuario_id, obra_id)
             )
             conn.commit()
 
@@ -297,21 +298,25 @@ class Visitante(Usuario):
             cur.close()
             conn.close()
 
-    def listar_favoritos(self):
+    @staticmethod
+    def listar_favoritos(usuario_id):
         conn = get_conn()
         try:
-            cur = conn.cursor()
+            cur = conn.cursor(dictionary=True)
             cur.execute(
                 "SELECT obra_id FROM visitantes_favoritos WHERE usuario_id = %s",
-                (self.id,)
+                (usuario_id,)
             )
             filas = cur.fetchall()
             if not filas:
                 return []
+            
+            ids = [fila["obra_id"] for fila in filas]
+            formato = ','.join(['%s'] * len(ids))
+
             cur.execute(
-                "SELECT id, titulo, autor_id, descripcion FROM obras WHERE id IN (%s)" %
-                ','.join(['%s'] * len(filas)),
-                tuple(fila[0] for fila in filas)
+                f"SELECT id, titulo, autor_id, descripcion FROM obras WHERE id IN ({formato})",
+                tuple(ids)
             )
             obras = cur.fetchall()
             return obras
@@ -325,13 +330,14 @@ class Visitante(Usuario):
             cur.close()
             conn.close()
     
-    def eliminar_favorito(self, obra_id):
+    @staticmethod
+    def eliminar_favorito(usuario_id, obra_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
             cur.execute(
                 "DELETE FROM visitantes_favoritos WHERE usuario_id = %s AND obra_id = %s",
-                (self.id, obra_id)
+                (usuario_id, obra_id)
             )
             conn.commit()
 
@@ -344,10 +350,12 @@ class Visitante(Usuario):
             cur.close()
             conn.close()
     
-    def agregar_comentario(self, obra_id, texto):
-        return Comentarios.crear_comentario(obra_id, self.id, texto)  
+    @staticmethod
+    def agregar_comentario(usuario_id, obra_id, texto):
+        return Comentarios.crear_comentario(obra_id, usuario_id, texto)  
 
-    def eliminar_comentario(self, comentario_id):
+    @staticmethod
+    def eliminar_comentario(usuario_id, comentario_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
@@ -356,7 +364,7 @@ class Visitante(Usuario):
                 (comentario_id,)
             )
             autor_id = cur.fetchone()
-            if autor_id and autor_id[0] == self.id:
+            if autor_id and autor_id[0] == usuario_id:
                 Comentarios.eliminar_comentario_por_id(comentario_id)
                 conn.commit()
                 return True
@@ -371,13 +379,16 @@ class Visitante(Usuario):
             cur.close()
             conn.close()
 
-    def crear_reporte(self, obra_id, motivo):
-        return Reportes.crear_reporte(obra_id, self.id, motivo)
+    @staticmethod
+    def crear_reporte(usuario_id, obra_id, motivo):
+        return Reportes.crear_reporte(obra_id, usuario_id, motivo)
     
-    def crear_sala(self, nombre, descripcion, privacidad, codigo_acceso):
-        return Salas.crear_sala(self.id, nombre, descripcion, privacidad, codigo_acceso)
+    @staticmethod
+    def crear_sala(usuario_id, nombre, descripcion, privacidad, codigo_acceso):
+        return Salas.crear_sala(usuario_id, nombre, descripcion, privacidad, codigo_acceso)
     
-    def eliminar_sala(self, sala_id):
+    @staticmethod
+    def eliminar_sala(usuario_id, sala_id):
         conn = get_conn()
         try:
             cur = conn.cursor()
@@ -386,7 +397,7 @@ class Visitante(Usuario):
                 (sala_id,)
             )
             autor_id = cur.fetchone()
-            if autor_id and autor_id[0] == self.id:
+            if autor_id and autor_id[0] == usuario_id:
                 Salas.eliminar_sala_por_id(sala_id)
                 conn.commit()
                 return True
@@ -401,7 +412,8 @@ class Visitante(Usuario):
             cur.close()
             conn.close()
 
-    def entrar_sala_id(self, sala_id, codigo_acceso):
+    @staticmethod
+    def entrar_sala_id(sala_id, codigo_acceso):
         sala = Salas.obtener_sala_por_id(sala_id)
         if sala is None:
             return None

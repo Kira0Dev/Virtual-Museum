@@ -40,7 +40,7 @@ def iniciar_sesion():
 def ejecutar_archivo(nombre_archivo):
     root.destroy()
 
-    # Abrir la ventana correta de forma directa (top-level) y sin perder session
+    #abrir la ventana correta de forma directa (top-level) y sin perder session
     if nombre_archivo == "artista_main_window.py":
         import artista_main_window
         artista_main_window.abrir_ventana_artista()

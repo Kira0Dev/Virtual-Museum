@@ -19,12 +19,12 @@ class Comentarios:
         try:
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO comentarios (obra_id, autor_id, texto) VALUES (%s, %s, %s) RETURNING id, fecha",
+                "INSERT INTO comentarios (obra_id, autor_id, texto) VALUES (%s, %s, %s)",
                 (obra_id, autor_id, texto)
             )
-            resultado = cur.fetchone()
+            comentario_id = cur.lastrowid 
             conn.commit()
-            return cls(resultado[0], obra_id, autor_id, texto, resultado[1])
+            return cls(comentario_id, obra_id, autor_id, texto)
         
         except Exception as e:
             conn.rollback()
