@@ -161,6 +161,29 @@ class Obras:
             conn.close()
 
     @classmethod
+    def eliminar_obra_por_titulo(cls, titulo, autor_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT autor_id FROM obras WHERE titulo = %s", (titulo,))
+            row = cur.fetchone()
+            if not row or row[0] != autor_id:
+                return False
+            else:
+                cur.execute("DELETE FROM obras WHERE titulo = %s AND autor_id = %s", (titulo, autor_id))
+                conn.commit()
+                return cur.rowcount > 0
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al eliminar obra por titulo", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+    @classmethod
     def actualizar_estado_publicacion(cls, obra_id, nuevo_estado):
         if nuevo_estado == "PENDIENTE" or nuevo_estado == "PUBLICADO" or nuevo_estado == "RECHAZADA":
             conn = get_conn()

@@ -41,6 +41,8 @@ class Usuario:
         return Usuario(id_, nombre, email, password_hash, fecha_registro, rol)
 
 
+
+
     #crear usuario
 
     @classmethod
@@ -134,9 +136,143 @@ class Usuario:
         finally:
             cur.close()
             conn.close()
+
+    @classmethod
+    def obtener_por_id(cls, usuario_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, nombre, email, password_hash, fecha_registro, rol
+                FROM usuarios
+                WHERE id = %s
+            """, (usuario_id,))
+            fila = cur.fetchone()
+            if not fila:
+                return None
+
+            return cls._crear_instancia(
+                fila[0], fila[1], fila[2], fila[3], fila[4], fila[5]
+            )
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener usuario por ID", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+    @classmethod
+    def obtener_por_email(cls, email):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT id, nombre, email, password_hash, fecha_registro, rol
+                FROM usuarios
+                WHERE email = %s
+            """, (email,))
+            fila = cur.fetchone()
+            if not fila:
+                return None
+
+            return cls._crear_instancia(
+                fila[0], fila[1], fila[2], fila[3], fila[4], fila[5]
+            )
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener usuario por email", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+    @classmethod
+    def get_rol_por_ID(cls, usuario_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT rol FROM usuarios WHERE id = %s", (usuario_id,))
+            fila = cur.fetchone()
+            if fila:
+                return fila[0]
+            return None
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener rol", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+    @classmethod
+    def obtener_rol_por_email(cls, email):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT rol FROM usuarios WHERE email = %s", (email,))
+            fila = cur.fetchone()
+            if fila:
+                return fila[0]
+            return None
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener rol por email", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
+
+    @classmethod
+    def obtener_id_por_email(cls, email):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM usuarios WHERE email = %s", (email,))
+            fila = cur.fetchone()
+            if fila:
+                return fila[0]
+            return None
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener ID por email", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()
     
     def __str__(self):
         return f"{self.nombre} ({self.rol})"
+    
+    @classmethod
+    def obtener_nombre_por_id(cls, usuario_id):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT nombre FROM usuarios WHERE id = %s", (usuario_id,))
+            fila = cur.fetchone()
+            if fila:
+                return fila[0]
+            return None
+        
+        except Exception as e:
+            conn.rollback()
+            logging.error(f"Error al obtener nombre por ID", exc_info=True)
+            raise
+
+        finally:
+            cur.close()
+            conn.close()    
 
 
 #subclases

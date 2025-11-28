@@ -1,0 +1,41 @@
+#artista_crear_biografia.py
+import session
+from usuario import Artista
+
+import tkinter as tk
+from tkinter import messagebox
+import subprocess
+import sys
+import os
+
+def crear_biografia():
+    biografia = text_biografia.get("1.0", tk.END).strip()
+
+    if not biografia:
+        messagebox.showerror("Error", "La biografía no puede estar vacía")
+        return
+
+    artista_id = session.usuario_id
+    Artista.agregar_biografia(artista_id, biografia)
+    messagebox.showinfo("Éxito", "Biografía guardada exitosamente")
+    ejecutar_archivo("artista_main_window.py")
+
+def ejecutar_archivo(nombre_archivo):
+    ruta = os.path.join(os.path.dirname(__file__), nombre_archivo)
+    subprocess.Popen([sys.executable, ruta])
+    root.destroy()
+
+#ventana
+root = tk.Tk()
+root.title("Crear Biografía de Artista")
+root.geometry("400x300")
+
+#widgets
+label_biografia = tk.Label(root, text="Por favor, escribe tu Biografía:")
+label_biografia.pack(pady=10)
+
+text_biografia = tk.Text(root, width=40, height=10)
+text_biografia.pack()
+
+btn_guardar_biografia = tk.Button(root, text="Guardar Biografía", font=("Arial", 12), command=crear_biografia)
+btn_guardar_biografia.pack(pady=10)
