@@ -241,6 +241,35 @@ class Artista(Usuario):
             cur.close()
             conn.close()
 
+    def cambiar_biografia(self, biografia):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE artistas_info SET biografia = %s WHERE usuario_id = %s",
+                (biografia, self.id)
+            )
+            conn.commit()
+        finally:
+            cur.close()
+            conn.close()
+        
+    def obtener_biografia(self):
+        conn = get_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT biografia FROM artistas_info WHERE usuario_id = %s",
+                (self.id,)
+            )
+            fila = cur.fetchone()
+            if fila:
+                return fila[0]
+            return None
+        finally:
+            cur.close()
+            conn.close()
+
     def ver_portafolio(self):
         conn = get_conn()
         try:
@@ -257,6 +286,7 @@ class Artista(Usuario):
 
     def agregar_obra(self, titulo, descripcion, archivo_url=None, miniatura_url=None, tags=[], estado_publicacion="PENDIENTE"):
         return Obras.crear_obra(titulo, descripcion, self.id, archivo_url, miniatura_url, tags, estado_publicacion)
+    
     
     def eliminar_obra(self, obra_id):
         conn = get_conn()
@@ -308,10 +338,7 @@ class Moderador(Usuario):
         try:
             cur = conn.cursor()
             #actualizar el estado del reporte
-            cur.execute(
-                "UPDATE reportes SET estado = 'RESUELTO' WHERE id = %s",
-                (reporte_id,)
-            )
+            Reportes.resolver_reporte(reporte_id)
             cur.execute(
                 "INSERT INTO moderadores_reportes (moderador_id, reporte_id) VALUES (%s, %s)",
                 (self.id, reporte_id)
